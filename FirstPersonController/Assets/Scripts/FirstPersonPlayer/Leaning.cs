@@ -1,14 +1,17 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System;
 
 namespace FirstPersonPlayer {
     public class Leaning : MonoBehaviour {
-        private Transform neck;
-        private PlayerInput playerInput;
-
         [SerializeField, Tooltip("(seconds) to lean to one side"), Range(0, 60)] private float requiredTime;
         [SerializeField, Tooltip("(units)"), Range(0, 1)] private float positionDelta;
         [SerializeField, Tooltip("(degrees)"), Range(0, 90)] private float rotationDelta = 25;
+
+        private Transform neck;
+        private PlayerInput playerInput;
+        private MouseLook mouseLook;
+
 
         private float elapsedTime;
 
@@ -24,6 +27,7 @@ namespace FirstPersonPlayer {
 
         private void Awake() {
             neck = Camera.main.transform.parent;
+            mouseLook = GetComponent<MouseLook>();
 
             playerInput = new();
             playerInput.Player.Enable();
@@ -57,7 +61,10 @@ namespace FirstPersonPlayer {
                 neck.localPosition = newPos;
             }
             void LeanRot(float target) {
-                Quaternion newRot = Quaternion.Lerp(Quaternion.Euler(neck.rotation.x, 0, 0), Quaternion.Euler(neck.rotation.x, 0, target), t);
+                Quaternion from = Quaternion.Euler(mouseLook.XAngle, neck.localRotation.y, 0);
+                Quaternion to = Quaternion.Euler(mouseLook.XAngle, neck.localRotation.y, target);
+
+                Quaternion newRot = Quaternion.Lerp(from, to, t);
                 neck.localRotation = newRot;
             }
         }
