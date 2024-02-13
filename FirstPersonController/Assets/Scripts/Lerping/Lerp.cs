@@ -2,6 +2,8 @@
 using UnityEngine;
 
 namespace Lerping {
+    public enum LerpDirection { Addition, Substraction, Inactive }
+
     public class Lerp : MonoBehaviour {
         public event Action LerpFinished;
         protected Func<float, float> lerpingFunction;
@@ -10,12 +12,13 @@ namespace Lerping {
         protected float elapsedTime;
 
         protected bool toDispose;
+        protected LerpDirection lerpDirection;
 
         protected void Update() {
             float percent = elapsedTime / lerpingTime;
             float t = lerpingFunction(percent);
 
-            SettingValues(t);
+            if (lerpDirection != LerpDirection.Inactive) SettingValues(t);
 
             if (elapsedTime == lerpingTime) {
                 LerpFinished?.Invoke();
@@ -23,8 +26,15 @@ namespace Lerping {
                 if (toDispose) Dispose();
             }
 
-            elapsedTime += Time.deltaTime;
+            if (lerpDirection == LerpDirection.Addition) elapsedTime += Time.deltaTime;
+            else if (lerpDirection == LerpDirection.Substraction) elapsedTime -= Time.deltaTime;
+
+
             elapsedTime = Mathf.Clamp(elapsedTime, 0, lerpingTime);
+        }
+
+        public void SetDirection(LerpDirection direction) { 
+            lerpDirection = direction;
         }
 
         protected virtual void SettingValues(float t) {
@@ -32,8 +42,6 @@ namespace Lerping {
         }
 
         protected void Dispose() {
-            
-
             LerpFinished = null;
             Destroy(gameObject);
         }

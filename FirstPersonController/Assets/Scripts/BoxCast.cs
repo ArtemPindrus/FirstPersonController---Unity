@@ -10,10 +10,12 @@ public class BoxCast : MonoBehaviour
 
     private RaycastHit hit;
 
-    public void Initialize(Vector3 extends, Vector3 direction, float distance) {
+    public void Initialize(Vector3 extends, Vector3 direction, float distance, bool debug = false) {
         this.extends = extends;
         this.direction = direction;
         this.distance = distance;
+
+        this.debug = debug;
     }
 
     public RaycastHit Hit => hit;

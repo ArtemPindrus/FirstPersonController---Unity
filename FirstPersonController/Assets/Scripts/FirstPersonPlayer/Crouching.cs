@@ -1,3 +1,4 @@
+using Lerping;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,23 +16,24 @@ namespace FirstPersonPlayer {
         private CharacterController charController;
         private PlayerInput playerInput;
         private BoxCast rayFromAbove;
+        private LerpFloat lerping;
 
 
-        private float initialHeight;
-        private float crouchingHeight;
         private float previousHeight;
 
-        private float timeElapsed = 0;
 
         private void Start() {
             charController = GetComponent<CharacterController>();
 
+            //input
             playerInput = new();
             playerInput.Player.Enable();
             playerInput.Player.Crouch.performed += HandleCrouch;
 
-            initialHeight = charController.height;
-            crouchingHeight = crouchingHeightMult * initialHeight;
+            //initialize lerping manager
+            float initialHeight = charController.height;
+            float crouchingHeight = crouchingHeightMult * initialHeight;
+            lerping = LerpFloat.Initialize(initialHeight, crouchingHeight, SetHeight, crouchingTime, false);
 
             //initialize boxcast
             GameObject empty = new("BoxCastAbove");
@@ -39,34 +41,35 @@ namespace FirstPersonPlayer {
             empty.transform.localPosition = Vector3.zero + Vector3.up * (charController.height / 2);
 
             rayFromAbove = empty.AddComponent<BoxCast>();
-            rayFromAbove.Initialize(new(charController.radius, 0.1f, charController.radius), Vector3.up, 0.01f);
+            rayFromAbove.Initialize(new(charController.radius, 0.01f, charController.radius), Vector3.up, 0.1f, true);
+
+
+            //fncs
+            void SetHeight(float newHeight) {
+                previousHeight = charController.height;
+
+                charController.height = newHeight;
+
+                //adjust centre
+                float heightDelta = previousHeight - charController.height;
+                Vector3 currentCenter = charController.center;
+                currentCenter.y += heightDelta / 2;
+                charController.center = currentCenter;
+
+                //adjust y locPosition
+                charController.enabled = false;
+                transform.Translate(-Vector3.up * heightDelta);
+                charController.enabled = true;
+            }
         }
 
         private void Update() {
             previousHeight = charController.height;
 
-            //change time
-            if (IsCrouching) timeElapsed += Time.deltaTime;
-            else if (!IsCrouching && !rayFromAbove.HitLastFrame) timeElapsed -= Time.deltaTime;
-            timeElapsed = Mathf.Clamp(timeElapsed, 0, crouchingTime);
-
-            //calculate new height
-            float percent = timeElapsed / crouchingTime;
-            float t = percent * percent * (3f - 2f * percent);
-
-            charController.height = Mathf.Lerp(initialHeight, crouchingHeight, t);
-
-            //handle center change
-            float heightDelta = previousHeight - charController.height;
-            Vector3 currentCenter = charController.center;
-            currentCenter.y += heightDelta / 2;
-            charController.center = currentCenter;
-
-            //correct transfrom position on uncrouch 
-            if (heightDelta > 0) {
-                charController.enabled = false;
-                transform.Translate(-Vector3.up * heightDelta);
-                charController.enabled = true;
+            if (IsCrouching) lerping.SetDirection(LerpDirection.Addition);
+            else if (!IsCrouching) {
+                if (!rayFromAbove.HitLastFrame) lerping.SetDirection(LerpDirection.Substraction);
+                else lerping.SetDirection(LerpDirection.Inactive);
             }
         }
 
