@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using System;
 
 namespace FirstPersonPlayer {
@@ -29,8 +28,7 @@ namespace FirstPersonPlayer {
             neck = Camera.main.transform.parent;
             mouseLook = GetComponent<MouseLook>();
 
-            playerInput = new();
-            playerInput.Player.Enable();
+            playerInput = PlayerInputSingleton.Instance;
         }
 
         float direction = 1;

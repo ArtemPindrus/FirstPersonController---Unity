@@ -8,15 +8,15 @@ namespace FirstPersonPlayer {
             [SerializeField, Tooltip("(units/secondSqr)"), Range(0,10)] private float acceleration = 2f;
             [SerializeField, Tooltip("(units/secondSqr)"), Range(0, 10)] private float deceleration = 4f;
 
-        [field: Header("Running")]
+        [field: Header("Running:")]
             [field: SerializeField] public bool RunningIsAllowed { get; private set; } = true;
             [SerializeField, Range(0, 10)] private float runningSpeedIncrease = 0.5f;
 
-        [field: Header("Jump")]
+        [field: Header("Jump:")]
             [field: SerializeField] public bool JumpingIsAllowed { get; private set; } = true;
             [SerializeField, Range(0, 10)] private float jumpPower = 4;
 
-        [Header("Crouching")]
+        [Header("Crouching:")]
             [SerializeField, Range(0, 10)] private float crouchingSpeedDecrease = 0.3f;
 
 
@@ -30,8 +30,7 @@ namespace FirstPersonPlayer {
             charController = GetComponent<CharacterController>();
             crouching = GetComponent<Crouching>();
 
-            playerInput = new();
-            playerInput.Player.Enable();
+            playerInput = PlayerInputSingleton.Instance;
 
             //charController.detectCollisions = false;
 
