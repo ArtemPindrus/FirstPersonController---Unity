@@ -2,7 +2,7 @@ using UnityEngine;
 using Extensions;
 using System;
 
-#nullable enable
+
 namespace FirstPersonPlayer {
     [RequireComponent(typeof(Crouching))]
     public class BasicMovement : MonoBehaviour {
@@ -46,8 +46,10 @@ namespace FirstPersonPlayer {
         private float verticalVelocity;
         private float currentMovementSpeed;
         private Vector2 CurrentMoveInput => playerInput.Player.Move.ReadValue<Vector2>();
+#nullable enable
         private Vector3? directionOnOffGround = null;
-        
+#nullable disable
+
 
         private void Update() {
             //Update VerticalVelocity
