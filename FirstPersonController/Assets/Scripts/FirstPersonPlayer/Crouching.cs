@@ -15,7 +15,7 @@ namespace FirstPersonPlayer {
             "Note that the value doesn't change during the runtime!")] 
             private float overhead = 0.1f;
 
-
+        public float InitialHeight { get; private set; }
         public bool IsCrouching { get; private set; } = false;
 
 
@@ -29,12 +29,13 @@ namespace FirstPersonPlayer {
 
         private void Start() {
             charController = GetComponent<CharacterController>();
+            InitialHeight = charController.height;
 
             //input
             playerInput = PlayerInputSingleton.Instance;
             playerInput.Player.Crouch.performed += HandleCrouch;
 
-            //initialize lerping manager
+            //initialize tween
             float crouchingHeight = crouchingHeightMult * charController.height;
             heightTween = DOTween.To(() => charController.height, SetHeight, crouchingHeight, crouchingTime)
                 .SetEase(Ease.InOutSine)
@@ -48,6 +49,19 @@ namespace FirstPersonPlayer {
 
             rayFromAbove = empty.AddComponent<BoxCast>()
                 .Initialize(new(charController.radius, 0.01f, charController.radius), Vector3.up, overhead, false);
+        }
+        private void HandleCrouch(InputAction.CallbackContext _) {
+            if (charController.isGrounded) IsCrouching = !IsCrouching;
+        }
+
+        private void Update() {
+            previousHeight = charController.height;
+
+            if (IsCrouching) SetToCrouch();
+            else if (!IsCrouching) {
+                if (!rayFromAbove.HitLastFrame) SetToDecrouch();
+                else SetToInactive();
+            }
         }
 
         private void SetHeight(float newHeight) {
@@ -71,19 +85,33 @@ namespace FirstPersonPlayer {
         private void SetToCrouch() => heightTween.PlayForward();
         private void SetToInactive() => heightTween.Pause();
 
+        /// <summary>
+        /// Interpolates current height to the target value and back to initial height to simulate knees bend
+        /// </summary>
+        /// <param name="heightMultiplier">How much of initial height is a target value</param>
+        /// <param name="time">Time that will be applied to both interpolations</param>
+        /// <param name="onCrouchAchieved"></param>
+        /// <param name="onFinished">Callback for finished bend</param>
+        public void Bend(float heightMultiplier, float time, TweenCallback onCrouchAchieved, TweenCallback onFinished) {
+            heightTween.Pause();
 
-        private void Update() {
-            previousHeight = charController.height;
+            heightMultiplier = Mathf.Clamp01(heightMultiplier);
+            float targetLowerHeight = InitialHeight * heightMultiplier;
 
-            if (IsCrouching) SetToCrouch();
-            else if (!IsCrouching) {
-                if (!rayFromAbove.HitLastFrame) SetToDecrouch();
-                else SetToInactive();
-            }
-        }
+            var tweenSequence = DOTween.Sequence();
+            tweenSequence.Append(
+                DOTween.To(() => charController.height, SetHeight, targetLowerHeight, time)
+                    .SetEase(Ease.InOutSine)
+                    .OnComplete(onCrouchAchieved)
+            );
+            tweenSequence.Append(
+                DOTween.To(() => charController.height, SetHeight, InitialHeight, time)
+                    .SetEase(Ease.InSine)
+            );
 
-        private void HandleCrouch(InputAction.CallbackContext _) { 
-            if (charController.isGrounded) IsCrouching = !IsCrouching;
+            tweenSequence.OnComplete(OnSequenceCompletion).OnComplete(onFinished);
+
+            void OnSequenceCompletion() => heightTween.Play();
         }
     }
 }
