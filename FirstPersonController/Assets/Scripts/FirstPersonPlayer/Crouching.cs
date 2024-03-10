@@ -4,12 +4,16 @@ using UnityEngine.InputSystem;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using Extensions;
 
 namespace FirstPersonPlayer {
     [RequireComponent(typeof(CharacterController))]
     public class Crouching : MonoBehaviour {
         [SerializeField, Range(0f, 10f), Tooltip("Time in seconds to crouch")] private float crouchingTime = 0.5f;
         [SerializeField, Range(0f, 1f), Tooltip("How much of initial heigh is a crouching height")] private float crouchingHeightMult = 0.5f;
+        [SerializeField, Range(0.01f, 1f), Tooltip("While uncrouching the player will stop if he encounters obstacle above within the given distance. \n" +
+            "Note that the value doesn't change during the runtime!")] 
+            private float overhead = 0.1f;
 
 
         public bool IsCrouching { get; private set; } = false;
@@ -32,7 +36,9 @@ namespace FirstPersonPlayer {
 
             //initialize lerping manager
             float crouchingHeight = crouchingHeightMult * charController.height;
-            heightTween = DOTween.To(() => charController.height, SetHeight, crouchingHeight, crouchingTime).SetEase(Ease.InOutSine).SetAutoKill(false);
+            heightTween = DOTween.To(() => charController.height, SetHeight, crouchingHeight, crouchingTime)
+                .SetEase(Ease.InOutSine)
+                .SetAutoKill(false);
             SetToDecrouch();
 
             //initialize boxcast
@@ -40,7 +46,8 @@ namespace FirstPersonPlayer {
             empty.transform.parent = transform;
             empty.transform.localPosition = Vector3.zero + Vector3.up * (charController.height / 2);
 
-            rayFromAbove = empty.AddComponent<BoxCast>().Initialize(new(charController.radius, 0.01f, charController.radius), Vector3.up, 0.1f, false);
+            rayFromAbove = empty.AddComponent<BoxCast>()
+                .Initialize(new(charController.radius, 0.01f, charController.radius), Vector3.up, overhead, false);
         }
 
         private void SetHeight(float newHeight) {
@@ -50,9 +57,8 @@ namespace FirstPersonPlayer {
 
             //adjust center
             float heightDelta = previousHeight - charController.height;
-            Vector3 currentCenter = charController.center;
-            currentCenter.y += heightDelta / 2;
-            charController.center = currentCenter;
+            Vector3 targetCenter = charController.center.Add(y: heightDelta / 2);
+            charController.center = targetCenter;
 
             //adjust y locPosition
             charController.enabled = false;

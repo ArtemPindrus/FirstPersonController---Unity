@@ -1,5 +1,5 @@
 using UnityEngine;
-using Lerping;
+using Extensions;
 
 namespace FirstPersonPlayer {
     public class MouseLook : MonoBehaviour {
@@ -16,10 +16,9 @@ namespace FirstPersonPlayer {
 
         [Header("Horizontal Rotation:")]
             [SerializeField] private bool horizontalRotationAllowed = true;
-            [SerializeField, Range(-360f, 360f), Tooltip("Leave empty to ignore")] private float horizontalLimit;
 
 
-        private Transform neck;
+        [SerializeField] private Transform neck;
         private Transform player;
 
 
@@ -33,7 +32,6 @@ namespace FirstPersonPlayer {
         private void Awake() {
             if (lockCursor) Cursor.lockState = CursorLockMode.Locked;
 
-            neck = GetComponentInChildren<Camera>().transform.parent;
             player = transform;
 
             initialLowerVerticalLimit = lowerVerticalLimit;
@@ -42,33 +40,31 @@ namespace FirstPersonPlayer {
         }
 
         private void Update() {
-            if (horizontalRotationAllowed) {
-                float horizontalRot = Input.GetAxis("Mouse X") * sensitivity; //TODO: DeltaTime?
-                RotateHorizontally(horizontalRot);
-            }
+#warning The Delta is not accounted. Normal?
 
-            if (verticalRotationAllowed) {
-                float verticalRot = Input.GetAxis("Mouse Y") * sensitivity;
-                RotateVertically(-verticalRot);
-            }
+            Vector2 mouseDelta = new(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+            mouseDelta *= sensitivity;
+
+            RotateHorizontally(mouseDelta.x);
+            RotateVertically(-mouseDelta.y);
+        }
+
+        private void RotateHorizontally(float delta) {
+            if (!horizontalRotationAllowed) return;
+
+            Vector3 targetEuler = player.localEulerAngles.Add(y: delta);
+
+            player.localEulerAngles = targetEuler;
+        }
+
+        private void RotateVertically(float delta) {
+            if (!verticalRotationAllowed) return;
 
 
-            //funcs
-            void RotateHorizontally(float delta) {
-                Vector3 currentRot = player.localEulerAngles;
+            XAngle = Mathf.Clamp(XAngle + delta, upperVerticalLimit, lowerVerticalLimit);
 
-                Vector3 targetEuler = new(currentRot.x, currentRot.y+delta, currentRot.z);
-                if (horizontalLimit != 0) targetEuler.y = Mathf.Clamp(targetEuler.y, -horizontalLimit, horizontalLimit);
-
-                player.localEulerAngles = targetEuler;
-            }
-            void RotateVertically(float delta) {
-                XAngle = Mathf.Clamp(XAngle + delta, upperVerticalLimit, lowerVerticalLimit);
-
-                Vector3 targetEuler = neck.localEulerAngles;
-                targetEuler.x = XAngle;
-                neck.localEulerAngles = targetEuler;
-            }
+            Vector3 targetEuler = neck.localEulerAngles.With(x: XAngle);
+            neck.localEulerAngles = targetEuler;
         }
 
         public void DisableRot() {
@@ -83,27 +79,16 @@ namespace FirstPersonPlayer {
         public void DisableVerticalRot() => verticalRotationAllowed = false;
         public void EnableVerticalRot() => verticalRotationAllowed = true;
 
-        public void ResetSensitivity() => sensitivity = initialSensitivity;
+        public void ResetSensitivityToInitial() => sensitivity = initialSensitivity;
 
-        public void LerpVerticalRotation(float targetXAngle, float lerpingTime, bool reenableVerRotOnFinish) {
-            DisableVerticalRot();
-            LerpFloat lerpXAngle = LerpFloat.Initialize(XAngle, targetXAngle, SetXAngle, lerpingTime);
-            if (reenableVerRotOnFinish) lerpXAngle.LerpFinished += EnableVerticalRot;
+        //public void LerpVerticalRotation(float targetXAngle, float lerpingTime, bool reenableVerRotOnFinish) {
+        //    DisableVerticalRot();
+        //    LerpFloat lerpXAngle = LerpFloat.Initialize(XAngle, targetXAngle, SetXAngle, lerpingTime);
+        //    if (reenableVerRotOnFinish) lerpXAngle.LerpFinished += EnableVerticalRot;
 
-            void SetXAngle(float newX) {
-                XAngle = newX;
-            }
-        }
-
-        //public void SetCustomHorizontalRotationTransform(Transform targetTransform, float horizontalLimit) {
-        //    this.horizontalLimit = horizontalLimit;
-        //    player = targetTransform;
-        //}
-
-
-        //public void ResetHorizontalRotationTransform() {
-        //    player = transform;
-        //    horizontalLimit = 0;
+        //    void SetXAngle(float newX) {
+        //        XAngle = newX;
+        //    }
         //}
 
         public void SetVerticalLimits(float upperLimit, float lowerLimit) {
@@ -111,7 +96,7 @@ namespace FirstPersonPlayer {
             lowerVerticalLimit = lowerLimit;
         }
 
-        public void ResetVerticalLimits() {
+        public void ResetVerticalLimitsToInitial() {
             upperVerticalLimit = initialUpperVerticalLimit;
             lowerVerticalLimit = initialLowerVerticalLimit;
         }
