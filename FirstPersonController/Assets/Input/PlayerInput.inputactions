@@ -42,33 +42,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "SwitchInventory",
-                    "type": "Button",
-                    "id": "269da804-deb8-4e4f-ba9e-020dc1931699",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "DropItem",
-                    "type": "Button",
-                    "id": "fca6f4d3-66bc-4d69-a8aa-8ede750e7e2a",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Interact",
-                    "type": "Value",
-                    "id": "cecd8fb7-ebe0-43b5-ab5c-f76940f2acbe",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
                     "name": "Crouch",
                     "type": "Button",
                     "id": "8bb89047-f9e3-4661-ab6e-15657047fb51",
@@ -188,39 +161,6 @@
                     "action": "Lean",
                     "isComposite": false,
                     "isPartOfComposite": true
-                },
-                {
-                    "name": "",
-                    "id": "87f178d5-9f44-464a-b202-296249067eac",
-                    "path": "<Keyboard>/tab",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "KeyB+Mouse",
-                    "action": "SwitchInventory",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "bab7a3d3-3082-423c-824e-8953cf161097",
-                    "path": "<Keyboard>/x",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "KeyB+Mouse",
-                    "action": "DropItem",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "c23def1f-b3c0-4589-8639-3e235ce9c0b3",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "KeyB+Mouse",
-                    "action": "Interact",
-                    "isComposite": false,
-                    "isPartOfComposite": false
                 },
                 {
                     "name": "",

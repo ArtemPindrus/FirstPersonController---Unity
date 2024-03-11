@@ -85,6 +85,7 @@ namespace FirstPersonPlayer {
         private void SetToCrouch() => heightTween.PlayForward();
         private void SetToInactive() => heightTween.Pause();
 
+#nullable enable
         /// <summary>
         /// Interpolates current height to the target value and back to initial height to simulate knees bend
         /// </summary>
@@ -92,26 +93,29 @@ namespace FirstPersonPlayer {
         /// <param name="time">Time that will be applied to both interpolations</param>
         /// <param name="onCrouchAchieved"></param>
         /// <param name="onFinished">Callback for finished bend</param>
-        public void Bend(float heightMultiplier, float time, TweenCallback onCrouchAchieved, TweenCallback onFinished) {
+        public void Bend(float heightMultiplier, float time, TweenCallback? onCrouchAchieved, TweenCallback? onFinished) {
             heightTween.Pause();
 
             heightMultiplier = Mathf.Clamp01(heightMultiplier);
             float targetLowerHeight = InitialHeight * heightMultiplier;
 
             var tweenSequence = DOTween.Sequence();
-            tweenSequence.Append(
-                DOTween.To(() => charController.height, SetHeight, targetLowerHeight, time)
-                    .SetEase(Ease.InOutSine)
-                    .OnComplete(onCrouchAchieved)
-            );
+            var bend = DOTween.To(() => charController.height, SetHeight, targetLowerHeight, time).SetEase(Ease.InOutSine);
+
+            if (onCrouchAchieved != null) bend.OnComplete(onCrouchAchieved);
+
+            tweenSequence.Append(bend);
             tweenSequence.Append(
                 DOTween.To(() => charController.height, SetHeight, InitialHeight, time)
                     .SetEase(Ease.InSine)
             );
 
-            tweenSequence.OnComplete(OnSequenceCompletion).OnComplete(onFinished);
+            tweenSequence.OnComplete(OnSequenceCompletion);
+            if (onFinished != null) tweenSequence.OnComplete(onFinished);
+
 
             void OnSequenceCompletion() => heightTween.Play();
         }
+#nullable disable
     }
 }

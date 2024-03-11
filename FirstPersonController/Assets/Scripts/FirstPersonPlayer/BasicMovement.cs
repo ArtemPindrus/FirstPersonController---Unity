@@ -1,15 +1,19 @@
 using UnityEngine;
 using Extensions;
 using System;
-
+using Assets.Scripts.Extensions;
 
 namespace FirstPersonPlayer {
+
+    public enum JumpState { None, BendingKnees, Midair, Unbend }
+
     [RequireComponent(typeof(Crouching))]
+
     public class BasicMovement : MonoBehaviour {
         [Header("Walking:")]
             [SerializeField, Tooltip("(units/second)"), Range(0, 10)] private float walkingSpeed = 1f;
-            [SerializeField, Tooltip("(units/secondSqr)"), Range(0,10)] private float acceleration = 2f;
-            [SerializeField, Tooltip("(units/secondSqr)"), Range(0, 10)] private float deceleration = 4f;
+            [SerializeField, Tooltip("(units/secondSqr)"), Range(0, 20)] private float acceleration = 2f;
+            [SerializeField, Tooltip("(units/secondSqr)"), Range(0, 20)] private float deceleration = 4f;
 
         [field: Header("Running:")]
             [field: SerializeField] public bool RunningIsAllowed { get; private set; } = true;
@@ -32,7 +36,7 @@ namespace FirstPersonPlayer {
 
         private float initialWalkingSpeed;
 
-        private bool isJumping;
+        private JumpState jumpState;
 
         private void Awake() {
             charController = GetComponent<CharacterController>();
@@ -41,74 +45,74 @@ namespace FirstPersonPlayer {
             playerInput = PlayerInputSingleton.Instance;
 
             initialWalkingSpeed = walkingSpeed;
+            charController.OnGrounded(HandleOnGrounded);
+
+            void HandleOnGrounded() => jumpState = JumpState.None;
         }
 
         private float verticalVelocity;
         private float currentMovementSpeed;
-        private Vector2 CurrentMoveInput => playerInput.Player.Move.ReadValue<Vector2>();
-#nullable enable
-        private Vector3? directionOnOffGround = null;
-#nullable disable
-
+        private Vector3 movementDirection;
 
         private void Update() {
-            //Update VerticalVelocity
-            if (charController.isGrounded) {
-                if (JumpingIsAllowed && !isJumping && playerInput.Player.Jump.WasPressedThisFrame() && !crouching.IsCrouching) Jump();
-                else if (!isJumping) verticalVelocity = -1;
-            } else verticalVelocity += Physics.gravity.y * Time.deltaTime;
+            Vector2 currentMoveInput = playerInput.Player.Move.ReadValue<Vector2>();
 
             //Find the displacement
+            UpdateVerticalVelocity();
             UpdateMovementSpeed();
+            UpdateMovementDirection();
 
-            Vector3 direction;
-            if (CurrentMoveInput != Vector2.zero && charController.isGrounded) {
-                directionOnOffGround = null;
-                direction = transform.TransformDirection(new(CurrentMoveInput.x, 0, CurrentMoveInput.y));
-            } else {
-                if (directionOnOffGround == null) directionOnOffGround = transform.TransformDirection(new(CurrentMoveInput.x, 0, CurrentMoveInput.y));
-                direction = directionOnOffGround.Value;
-            }
-
-            Vector3 displacement = Time.deltaTime * currentMovementSpeed * direction;
-
-
+            Vector3 displacement = Time.deltaTime* currentMovementSpeed * movementDirection;
             displacement.y = verticalVelocity * Time.deltaTime;
 
             //move
             charController.Move(displacement);
 
 
-
             //fncs
             void UpdateMovementSpeed() {
+                if (jumpState != JumpState.None) return;
+
                 float targetMovementSpeed = 0;
-                if (CurrentMoveInput != Vector2.zero) {
+                if (currentMoveInput != Vector2.zero) {
                     if (RunningIsAllowed && !crouching.IsCrouching && playerInput.Player.Run.IsPressed()) targetMovementSpeed = walkingSpeed + runningSpeedIncrease;
                     else targetMovementSpeed = walkingSpeed;
 
                     if (crouching.IsCrouching) targetMovementSpeed -= crouchingSpeedDecrease;
                 }
 
-                if (currentMovementSpeed < targetMovementSpeed) {
-                    float frameAcceleration = acceleration * Time.deltaTime;
+                float frameSpeedChange = currentMovementSpeed < targetMovementSpeed ? acceleration : deceleration;
+                frameSpeedChange *= Time.deltaTime;
 
-                    currentMovementSpeed = Mathf.MoveTowards(currentMovementSpeed, targetMovementSpeed, frameAcceleration);
-                } else if (currentMovementSpeed > targetMovementSpeed) {
-                    float frameDeceletation = deceleration * Time.deltaTime;
+                currentMovementSpeed = Mathf.MoveTowards(currentMovementSpeed, targetMovementSpeed, frameSpeedChange);
+            }
+            void UpdateMovementDirection() {
+                if (jumpState != JumpState.None) return;
 
-                    currentMovementSpeed = Mathf.MoveTowards(currentMovementSpeed, targetMovementSpeed, frameDeceletation);
+                if (currentMoveInput == Vector2.zero && currentMovementSpeed == 0) movementDirection = Vector3.zero;
+                else if (currentMoveInput != Vector2.zero && charController.isGrounded && jumpState == JumpState.None) {
+                    movementDirection = transform.TransformDirection(new(currentMoveInput.x, 0, currentMoveInput.y));
                 }
+            }
+            void UpdateVerticalVelocity() {
+                if (charController.isGrounded && jumpState == JumpState.None) {
+                    if (JumpingIsAllowed && playerInput.Player.Jump.WasPressedThisFrame() && !crouching.IsCrouching) Jump();
+                    else verticalVelocity = -1;
+                } else if (!charController.isGrounded || jumpState == JumpState.Midair) verticalVelocity += Physics.gravity.y * Time.deltaTime;
             }
         }
 
         public void Jump() {
-            isJumping = true;
-            crouching.Bend(jumpBendHeightMultiplier, jumpBendTime, ReactToCrouch, ReactToUncrouch);
+            jumpState = JumpState.BendingKnees;
+
+            crouching.Bend(jumpBendHeightMultiplier, jumpBendTime, HendleCrouchAchieved, HendleUnbend);
             
 
-            void ReactToCrouch() => verticalVelocity = jumpPower;
-            void ReactToUncrouch() => isJumping = false;
+            void HendleCrouchAchieved() {
+                verticalVelocity = jumpPower;
+                jumpState = JumpState.Midair;
+            }
+            void HendleUnbend() => jumpState = JumpState.Unbend;
         }
 
         public void ResetWalkingSpeed() => walkingSpeed = initialWalkingSpeed;

@@ -1182,7 +1182,7 @@ MonoBehaviour:
   runningSpeedIncrease: 0.5
   <JumpingIsAllowed>k__BackingField: 1
   jumpPower: 2.5
-  jumpBendHeightMultiplier: 0.9
+  jumpBendHeightMultiplier: 0.92
   jumpBendTime: 0.3
   crouchingSpeedDecrease: 0.3
 --- !u!143 &1321950196
@@ -1207,7 +1207,7 @@ CharacterController:
   m_Height: 1.74
   m_Radius: 0.25
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0
   m_SkinWidth: 0.025
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 0, z: 0}
