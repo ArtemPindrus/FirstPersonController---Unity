@@ -13,7 +13,7 @@ namespace FirstPersonPlayer {
 
         [SerializeField] private Transform neck;
         [SerializeField] private Transform neckZRotator;
-        private PlayerInput playerInput;
+        private @InputSystem.PlayerActions playerInput;
 
         private TweenerCore<Vector3, Vector3, VectorOptions> positionTween;
         private TweenerCore<Quaternion, Vector3, QuaternionOptions> rotationTween;
@@ -23,7 +23,7 @@ namespace FirstPersonPlayer {
         }
 
         private void Awake() {
-            playerInput = PlayerInputSingleton.Instance;
+            playerInput = InputSystem.Instance.Player;
 
             positionTween = neck.DOLocalMove(new(0, neck.localPosition.y, neck.localPosition.z), requiredTime)
                 .SetEase(Ease.InOutSine)
@@ -38,7 +38,7 @@ namespace FirstPersonPlayer {
             if (!enabled) return;
 
 
-            float input = playerInput.Player.Lean.ReadValue<float>();
+            float input = playerInput.Lean.ReadValue<float>();
 
             if (CurrentLean == 0) {
                 if (input == 0) SetTweensEnds(0, 0);

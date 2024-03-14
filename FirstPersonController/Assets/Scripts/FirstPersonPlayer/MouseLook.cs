@@ -20,6 +20,7 @@ namespace FirstPersonPlayer {
 
         [SerializeField] private Transform neck;
         private Transform player;
+        private InputSystem.PlayerActions playerInput;
 
 
         private float initialUpperVerticalLimit;
@@ -33,17 +34,18 @@ namespace FirstPersonPlayer {
             if (lockCursor) Cursor.lockState = CursorLockMode.Locked;
 
             player = transform;
+            playerInput = InputSystem.Instance.Player;
+            playerInput.LookAround.started += LookAround_started;
 
             initialLowerVerticalLimit = lowerVerticalLimit;
             initialUpperVerticalLimit = upperVerticalLimit;
             initialSensitivity = sensitivity;
         }
 
-        private void Update() {
-#warning The Delta is not accounted. Normal?
+        private void LookAround_started(UnityEngine.InputSystem.InputAction.CallbackContext context) {
+            Vector2 mouseDelta = context.ReadValue<Vector2>();
+            mouseDelta *= sensitivity / 10;
 
-            Vector2 mouseDelta = new(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            mouseDelta *= sensitivity;
 
             RotateHorizontally(mouseDelta.x);
             RotateVertically(-mouseDelta.y);
@@ -80,16 +82,6 @@ namespace FirstPersonPlayer {
         public void EnableVerticalRot() => verticalRotationAllowed = true;
 
         public void ResetSensitivityToInitial() => sensitivity = initialSensitivity;
-
-        //public void LerpVerticalRotation(float targetXAngle, float lerpingTime, bool reenableVerRotOnFinish) {
-        //    DisableVerticalRot();
-        //    LerpFloat lerpXAngle = LerpFloat.Initialize(XAngle, targetXAngle, SetXAngle, lerpingTime);
-        //    if (reenableVerRotOnFinish) lerpXAngle.LerpFinished += EnableVerticalRot;
-
-        //    void SetXAngle(float newX) {
-        //        XAngle = newX;
-        //    }
-        //}
 
         public void SetVerticalLimits(float upperLimit, float lowerLimit) {
             upperVerticalLimit = upperLimit;
