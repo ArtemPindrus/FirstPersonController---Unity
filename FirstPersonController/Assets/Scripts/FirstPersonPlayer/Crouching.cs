@@ -32,6 +32,7 @@ namespace FirstPersonPlayer {
         public CrouchState CrouchState { get; private set; } = CrouchState.Decrouched;
 
 
+        public bool IsInCrouchUnderState => CrouchState == CrouchState.Crouched || CrouchState == CrouchState.Under;
         private bool crouchMuted;
 
 
@@ -117,7 +118,7 @@ namespace FirstPersonPlayer {
             heightTween.Pause();
             crouchMuted = true;
 
-            ConditionActionManager.ConstructConditionActions(condition, Unmute);
+            ConditionActionManager.ConstructConditionActions(this, condition, Unmute);
 
             void Unmute() {
                 crouchMuted = false;
@@ -163,13 +164,13 @@ namespace FirstPersonPlayer {
             float heightOnCall = charController.height;
             float stepOffsetOnCall = charController.stepOffset;
 
-            crouchMuted = true;
             charController.stepOffset = 0;
 
             heightTween.ChangeValues(charController.height, targetHeight, crouchingTime * 2).Play();
             CrouchState = CrouchState.Under;
 
-            ConditionActionManager.ConstructConditionActions(condition, ReactToCondition);
+            ConditionActionManager.DeleteConditionActionsOfContainer(this);
+            ConditionActionManager.ConstructConditionActions(this, condition, ReactToCondition);
 
             void ReactToCondition() {
                 heightTween.ChangeValues(charController.height, heightOnCall, crouchingTime * 2).OnComplete(ReactToCompletion).Play();
@@ -178,7 +179,6 @@ namespace FirstPersonPlayer {
                     CrouchState = CrouchState.Crouched;
                     charController.stepOffset = stepOffsetOnCall;
                     heightTween.onComplete -= ReactToCompletion;
-                    crouchMuted = false;
                     crouchableUnmute();
                 }
             }

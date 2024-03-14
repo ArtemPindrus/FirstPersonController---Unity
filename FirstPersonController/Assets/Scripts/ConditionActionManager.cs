@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using Object = UnityEngine.Object;
+using System.Linq;
 
 namespace Scripts {
     public class ConditionActionManager : MonoBehaviour {
@@ -10,8 +12,18 @@ namespace Scripts {
             new GameObject("ConditionActionManager").AddComponent<ConditionActionManager>();
         }
 
-        public static void ConstructConditionActions(Func<bool> condition, params Action[] actions) {
-            conditions.Add(new(condition, actions));
+#nullable enable
+        public static void ConstructConditionActions(Object? container, Func<bool> condition, params Action[] actions) {
+            conditions.Add(new(container, condition, actions));
+        }
+#nullable disable
+        public static void DeleteConditionActionsOfContainer(Object container) {
+            conditions.RemoveAll(x => x.Container == container);
+        }
+
+        [ContextMenu("Debug Count")]
+        private void DebugCount() {
+            Debug.Log(conditions.Count);
         }
 
         private void Update() {
@@ -25,12 +37,14 @@ namespace Scripts {
             }
         }
 
-
+#nullable enable
         private readonly struct ConditionActions {
+            public Object? Container { get; }
             public Func<bool> Condition { get; }
             public Action[] Actions { get; }
 
-            public ConditionActions(Func<bool> condition, Action[] actions) { 
+            public ConditionActions(Object? container, Func<bool> condition, Action[] actions) {
+                Container = container;
                 Condition = condition;
                 Actions = actions;
             }
@@ -52,5 +66,6 @@ namespace Scripts {
                 foreach(var action in Actions) action();
             }
         }
+#nullable disable
     }
 }
