@@ -6,76 +6,81 @@ using DG.Tweening.Core;
 using Extensions;
 using Scripts;
 using DG.Tweening.Plugins.Options;
+using Input;
 
 namespace FirstPersonPlayer {
-    public enum CrouchState { Decrouched, Decrouching, Crouched, Crouching, Under }
+    public enum CrouchState { Standing, Uncrouching, Crouched, Crouching, Under }
 
     [RequireComponent(typeof(CharacterController))]
     public class Crouching : MonoBehaviour {
-        [SerializeField, Range(0f, 10f), Tooltip("Time in seconds to crouch")] private float crouchingTime = 0.5f;
-        [SerializeField, Range(0f, 1f), Tooltip("How much of initial heigh is a crouching height")] private float crouchedHeightMult = 0.5f;
+        [field: SerializeField, Range(0f, 10f), Tooltip("Time in seconds to crouch")] public float CrouchingTime { get; private set; } = 0.5f;
+        [field: SerializeField, Range(0, 2), Tooltip("How tall is the player in decrouched state. \nSets to CCT.height if not assigned.")] public float DecrouchedHeight { get; private set; }
+        [field: SerializeField, Tooltip("During Under crouch state the step offset is nulled out. After escaping it sets to the given value here. If 0 sets to the CCT.stepOffset on startup.")]
+            public float BasicStepOffset { get; private set; }
+        [SerializeField, Range(0f, 1f), Tooltip("How much of decrouched heigh is a crouching height")] private float crouchedHeightMult = 0.5f;
         [SerializeField, Range(0.01f, 1f), Tooltip("While uncrouching the player will stop if he encounters obstacle above within the given distance. \n" +
             "Note that the value doesn't change during the runtime!")] 
             private float overhead = 0.1f;
 
-        public float InitialHeight { get; private set; }
-        private float crouchedHeight;
+        public float CrouchedHeight { get; private set; }
 
 
-        private CharacterController charController;
-        private @InputSystem.PlayerActions playerInput;
-        private BoxCast boxCastUp;
-        private TweenerCore<float, float, FloatOptions> heightTween;
+        public CharacterController CharController { get; private set; }
+        public CrouchState CrouchState { get; set; } = CrouchState.Standing;
 
-        private float previousHeight;
+        private InputAsset.PlayerActions _playerInput;
+        private BoxCast _boxCastUp;
+        private TweenerCore<float, float, FloatOptions> _heightTween;
+        private static readonly Ease _crouchingEase = Ease.InOutSine;
 
-        public CrouchState CrouchState { get; private set; } = CrouchState.Decrouched;
+        private float _previousHeight;
+
 
 
         public bool IsInCrouchUnderState => CrouchState == CrouchState.Crouched || CrouchState == CrouchState.Under;
-        private bool crouchMuted;
+        private bool _crouchMuted;
 
 
         private void Start() {
-            charController = GetComponent<CharacterController>();
-            InitialHeight = charController.height;
+            CharController = GetComponent<CharacterController>();
+            if (DecrouchedHeight == 0) DecrouchedHeight = CharController.height;
+            if (BasicStepOffset == 0) BasicStepOffset = CharController.stepOffset;
+            CrouchedHeight = crouchedHeightMult * DecrouchedHeight;
 
             //input
-            playerInput = InputSystem.Instance.Player;
-            playerInput.Crouch.performed += HandleCrouch_Performed;
-
-            //initialize tween
-            crouchedHeight = crouchedHeightMult * charController.height;
-            heightTween = DOTween.To(() => charController.height, SetHeight, crouchedHeight, crouchingTime)
-                .SetEase(Ease.InOutSine)
-                .SetAutoKill(false).Pause();
+            _playerInput = InputAsset.Instance.Player;
+            _playerInput.Crouch.performed += HandleCrouch_Performed;
 
             //initialize boxcast
-            GameObject empty = new("BoxCastAbove");
-            empty.transform.parent = transform;
-            empty.transform.localPosition = Vector3.zero + Vector3.up * (charController.height / 2 - 0.05f); //-0.05 to eliminate problems with detection of objects that are too close
+            GameObject empty = new("BoxCastAbove") {
+                transform = {
+                    parent = transform,
+                    localPosition = Vector3.zero + Vector3.up * (CharController.height / 2 - 0.05f) //-0.05 to eliminate problems with detection of objects that are too close
+                }
+            };
 
-            boxCastUp = empty.AddComponent<BoxCast>()
-                .Initialize(new(charController.radius, 0.01f, charController.radius), Vector3.up, overhead + 0.05f, false);
+            float radius = CharController.radius;
+            _boxCastUp = empty.AddComponent<BoxCast>()
+                .Initialize(new(radius, 0.01f, radius), Vector3.up, overhead + 0.05f);
         }
         private void HandleCrouch_Performed(InputAction.CallbackContext _) {
-            if (charController.isGrounded) {
-                if (CrouchState == CrouchState.Decrouched || CrouchState == CrouchState.Decrouching) {
+            if (CharController.isGrounded) {
+                if (CrouchState == CrouchState.Standing || CrouchState == CrouchState.Uncrouching) {
                     SetToCrouching();
-                } else if ((CrouchState == CrouchState.Crouched || CrouchState == CrouchState.Crouching) && !boxCastUp.HitLastFrame) {
+                } else if ((CrouchState == CrouchState.Crouched || CrouchState == CrouchState.Crouching) && !_boxCastUp.HitLastFrame) {
                     SetToDecrouching();
                 }
             }
         }
 
         private void Update() {
-            previousHeight = charController.height;
+            _previousHeight = CharController.height;
 
-            if (crouchMuted && CrouchState == CrouchState.Under) return;
-            else if (CrouchState == CrouchState.Crouching && charController.height == crouchedHeight) CrouchState = CrouchState.Crouched;
-            else if (CrouchState == CrouchState.Decrouching) {
-                if (charController.height == InitialHeight) SetToDecrouched();
-                else if (boxCastUp.HitLastFrame) MuteCrouchUntil(() => !boxCastUp.HitLastFrame);
+            if (_crouchMuted && CrouchState == CrouchState.Under) return;
+            else if (CrouchState == CrouchState.Crouching && CharController.height == CrouchedHeight) CrouchState = CrouchState.Crouched;
+            else if (CrouchState == CrouchState.Uncrouching) {
+                if (CharController.height == DecrouchedHeight) SetToStanding();
+                else if (_boxCastUp.HitLastFrame) MuteCrouchUntil(() => !_boxCastUp.HitLastFrame);
             }
         }
 
@@ -84,45 +89,57 @@ namespace FirstPersonPlayer {
         /// </summary>
         /// <param name="newHeight"></param>
         private void SetHeight(float newHeight) {
-            previousHeight = charController.height;
+            float height = CharController.height;
+            _previousHeight = height;
 
-            charController.height = newHeight;
+            height = newHeight;
+            CharController.height = height;
 
             //adjust center
-            float heightDelta = previousHeight - charController.height;
-            Vector3 targetCenter = charController.center.Add(y: heightDelta / 2);
-            charController.center = targetCenter;
+            float heightDelta = _previousHeight - height;
+            Vector3 targetCenter = CharController.center.Add(y: heightDelta / 2);
+            CharController.center = targetCenter;
 
             //adjust y locPosition
-            charController.enabled = false;
+            CharController.enabled = false;
             transform.Translate(-Vector3.up * heightDelta);
-            charController.enabled = true;
+            CharController.enabled = true;
         }
 
 
-        private void SetToDecrouched() { 
-            heightTween.Pause();
+        private void SetToStanding() { 
+            _heightTween.Pause();
 
-            CrouchState = CrouchState.Decrouched;
+            CrouchState = CrouchState.Standing;
         }
         private void SetToDecrouching() {
-            heightTween.ChangeValues(charController.height, InitialHeight, crouchingTime).Play();
-            CrouchState = CrouchState.Decrouching;
+            _heightTween = DOTween.To(
+                () => CharController.height,
+                SetHeight,
+                DecrouchedHeight,
+                CrouchingTime
+            ).SetEase(_crouchingEase);
+            CrouchState = CrouchState.Uncrouching;
         }
         private void SetToCrouching() {
-            heightTween.ChangeValues(charController.height, crouchedHeight, crouchingTime).Play();
+            _heightTween = DOTween.To(
+                () => CharController.height,
+                SetHeight,
+                CrouchedHeight,
+                CrouchingTime
+            ).SetEase(_crouchingEase);
             CrouchState = CrouchState.Crouching;
         }
 
         private void MuteCrouchUntil(Func<bool> condition) {
-            heightTween.Pause();
-            crouchMuted = true;
+            _heightTween.Pause();
+            _crouchMuted = true;
 
-            ConditionActionManager.ConstructConditionActions(this, condition, Unmute);
+            BehaviorOnConditionManager.ConstructBehaviorOnCondition(this, condition, Resume);
 
-            void Unmute() {
-                crouchMuted = false;
-                heightTween.Play();
+            void Resume() {
+                _crouchMuted = false;
+                _heightTween.Play();
             }
         }
 
@@ -135,19 +152,19 @@ namespace FirstPersonPlayer {
         /// <param name="onCrouchAchieved"></param>
         /// <param name="onFinished">Callback for finished bend</param>
         public void Bend(float heightMultiplier, float time, TweenCallback? onCrouchAchieved, TweenCallback? onFinished) {
-            if (CrouchState != CrouchState.Decrouched) throw new Exception("Current crouch state isn't Decrouched");
+            if (CrouchState != CrouchState.Standing) throw new Exception("Current crouch state isn't Standing!");
 
             heightMultiplier = Mathf.Clamp01(heightMultiplier);
-            float targetLowerHeight = InitialHeight * heightMultiplier;
+            float targetLowerHeight = DecrouchedHeight * heightMultiplier;
 
             var tweenSequence = DOTween.Sequence();
-            var bend = DOTween.To(() => charController.height, SetHeight, targetLowerHeight, time).SetEase(Ease.InOutSine);
+            var bend = DOTween.To(() => CharController.height, SetHeight, targetLowerHeight, time).SetEase(Ease.InOutSine);
 
             if (onCrouchAchieved != null) bend.OnComplete(onCrouchAchieved);
 
             tweenSequence.Append(bend);
             tweenSequence.Append(
-                DOTween.To(() => charController.height, SetHeight, InitialHeight, time)
+                DOTween.To(() => CharController.height, SetHeight, DecrouchedHeight, time)
                     .SetEase(Ease.InSine)
             );
 
@@ -155,33 +172,17 @@ namespace FirstPersonPlayer {
         }
 #nullable disable
 
-        /// <summary>
-        /// For CrouchableUnder only
-        /// </summary>
-        /// <param name="targetHeight"></param>
-        /// <param name="condition"></param>
-        public void CrouchToUntil(float targetHeight, Func<bool> condition, Action crouchableUnmute) {
-            float heightOnCall = charController.height;
-            float stepOffsetOnCall = charController.stepOffset;
+        public Tween ReassignHeightTween(float targetHeight, float duration, bool killPrevious = false) {
+            if (killPrevious) _heightTween.Kill();
 
-            charController.stepOffset = 0;
+            _heightTween = DOTween.To(
+                () => CharController.height,
+                SetHeight,
+                targetHeight,
+                duration
+            ).SetEase(_crouchingEase);
 
-            heightTween.ChangeValues(charController.height, targetHeight, crouchingTime * 2).Play();
-            CrouchState = CrouchState.Under;
-
-            ConditionActionManager.DeleteConditionActionsOfContainer(this);
-            ConditionActionManager.ConstructConditionActions(this, condition, ReactToCondition);
-
-            void ReactToCondition() {
-                heightTween.ChangeValues(charController.height, heightOnCall, crouchingTime * 2).OnComplete(ReactToCompletion).Play();
-
-                void ReactToCompletion() {
-                    CrouchState = CrouchState.Crouched;
-                    charController.stepOffset = stepOffsetOnCall;
-                    heightTween.onComplete -= ReactToCompletion;
-                    crouchableUnmute();
-                }
-            }
+            return _heightTween;
         }
     }
 }

@@ -1,9 +1,9 @@
 using UnityEngine;
-using System;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using DG.Tweening;
 using Extensions;
+using Input;
 
 namespace FirstPersonPlayer {
     public class Leaning : MonoBehaviour {
@@ -13,23 +13,23 @@ namespace FirstPersonPlayer {
 
         [SerializeField] private Transform neck;
         [SerializeField] private Transform neckZRotator;
-        private @InputSystem.PlayerActions playerInput;
 
-        private TweenerCore<Vector3, Vector3, VectorOptions> positionTween;
-        private TweenerCore<Quaternion, Vector3, QuaternionOptions> rotationTween;
+        private InputAsset.PlayerActions _playerInput;
 
-        private float CurrentLean {
-            get => neck.transform.localPosition.x.SignZero();
-        }
+        private TweenerCore<Vector3, Vector3, VectorOptions> _positionTween;
+        private TweenerCore<Quaternion, Vector3, QuaternionOptions> _rotationTween;
+
+        private float CurrentLean => neck.transform.localPosition.x.SignZero();
 
         private void Awake() {
-            playerInput = InputSystem.Instance.Player;
+            Vector3 currentNeckLocalPos = neck.localPosition;
+            _playerInput = InputAsset.Instance.Player;
 
-            positionTween = neck.DOLocalMove(new(0, neck.localPosition.y, neck.localPosition.z), requiredTime)
+            _positionTween = neck.DOLocalMove(currentNeckLocalPos.With(x: 0), requiredTime)
                 .SetEase(Ease.InOutSine)
                 .SetAutoKill(false);
 
-            rotationTween = neckZRotator.DOLocalRotate(new(0, 0, 0), requiredTime)
+            _rotationTween = neckZRotator.DOLocalRotate(new(0, 0, 0), requiredTime)
                 .SetEase(Ease.InOutSine)
                 .SetAutoKill(false);
         }
@@ -38,7 +38,7 @@ namespace FirstPersonPlayer {
             if (!enabled) return;
 
 
-            float input = playerInput.Lean.ReadValue<float>();
+            float input = _playerInput.Lean.ReadValue<float>();
 
             if (CurrentLean == 0) {
                 if (input == 0) SetTweensEnds(0, 0);
@@ -46,8 +46,8 @@ namespace FirstPersonPlayer {
             } else {
                 if (input == CurrentLean) SetTweensEnds(positionDelta * input, -rotationDelta * input);
                 else {
-                    positionTween.PlayBackwards();
-                    rotationTween.PlayBackwards();
+                    _positionTween.PlayBackwards();
+                    _rotationTween.PlayBackwards();
                 }
             }
             
@@ -56,11 +56,11 @@ namespace FirstPersonPlayer {
                 Vector3 positionEnd = neck.localPosition.With(x: position);
                 Vector3 angleEnd = new(0, 0, angle);
 
-                if (positionTween.endValue != positionEnd) positionTween.ChangeEndValue(positionEnd);
-                if (rotationTween.endValue != angleEnd) rotationTween.ChangeEndValue(angleEnd);
+                if (_positionTween.endValue != positionEnd) _positionTween.ChangeEndValue(positionEnd);
+                if (_rotationTween.endValue != angleEnd) _rotationTween.ChangeEndValue(angleEnd);
 
-                positionTween.PlayForward();
-                rotationTween.PlayForward();
+                _positionTween.PlayForward();
+                _rotationTween.PlayForward();
             }
         }
     }

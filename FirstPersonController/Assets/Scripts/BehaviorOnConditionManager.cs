@@ -2,21 +2,21 @@
 using System.Collections.Generic;
 using System;
 using Object = UnityEngine.Object;
-using System.Linq;
 
 namespace Scripts {
-    public class ConditionActionManager : MonoBehaviour {
-        private readonly static List<ConditionActions> conditions = new();
+    public class BehaviorOnConditionManager : MonoBehaviour {
+        private static readonly List<BehaviorOnCondition> conditions = new();
 
-        static ConditionActionManager() { 
-            new GameObject("ConditionActionManager").AddComponent<ConditionActionManager>();
+        static BehaviorOnConditionManager() { 
+            new GameObject("ConditionActionManager").AddComponent<BehaviorOnConditionManager>();
         }
 
 #nullable enable
-        public static void ConstructConditionActions(Object? container, Func<bool> condition, params Action[] actions) {
+        public static void ConstructBehaviorOnCondition(Object? container, Func<bool> condition, params Action[] actions) { 
             conditions.Add(new(container, condition, actions));
         }
 #nullable disable
+
         public static void DeleteConditionActionsOfContainer(Object container) {
             conditions.RemoveAll(x => x.Container == container);
         }
@@ -38,12 +38,12 @@ namespace Scripts {
         }
 
 #nullable enable
-        private readonly struct ConditionActions {
+        private readonly struct BehaviorOnCondition {
             public Object? Container { get; }
-            public Func<bool> Condition { get; }
-            public Action[] Actions { get; }
+            private Func<bool> Condition { get; }
+            private Action[] Actions { get; }
 
-            public ConditionActions(Object? container, Func<bool> condition, Action[] actions) {
+            public BehaviorOnCondition(Object? container, Func<bool> condition, Action[] actions) {
                 Container = container;
                 Condition = condition;
                 Actions = actions;
@@ -53,16 +53,11 @@ namespace Scripts {
             /// 
             /// </summary>
             /// <returns>bool whether condition was true</returns>
-            public readonly bool Update() {
-                if (Condition()) { 
-                    foreach (var action in Actions) action();
-                    return true;
-                }
-
-                return false;
+            public bool Update() {
+                return Condition();
             }
 
-            public readonly void Execute() { 
+            public void Execute() { 
                 foreach(var action in Actions) action();
             }
         }

@@ -1,6 +1,6 @@
 using UnityEngine;
-using System;
 using UnityEngine.InputSystem;
+using Input;
 
 namespace FirstPersonPlayer {
 
@@ -32,29 +32,30 @@ namespace FirstPersonPlayer {
             [SerializeField, Range(0, 10), Tooltip("Amount of speed decrease when player is under an object (extra crouching)")] private float underSpeedDecrease = 0.6f;
 
 
-        private CharacterController charController;
-        private Crouching crouching;
-        private InputSystem.PlayerActions playerInput;
+        private CharacterController _charController;
+        private Crouching _crouching;
+        private InputAsset.PlayerActions _playerInput;
 
-        private float initialWalkingSpeed;
+        public Vector2 CurrentMoveInput => _playerInput.Move.ReadValue<Vector2>();
+        private float CurrentMovementSpeed { get; set; }
+        private float _verticalVelocity;
+        private Vector3 _movementDirection;
 
-        private JumpState jumpState;
+
+        private JumpState _jumpState;
 
         private void Awake() {
-            charController = GetComponent<CharacterController>();
-            crouching = GetComponent<Crouching>();
+            _charController = GetComponent<CharacterController>();
+            _crouching = GetComponent<Crouching>();
 
-            playerInput = InputSystem.Instance.Player;
+            _playerInput = InputAsset.Instance.Player;
 
-            initialWalkingSpeed = walkingSpeed;
-            playerInput.Jump.performed += HandleJump;
+            _playerInput.Jump.performed += HandleJump;
         }
 
-        private float verticalVelocity;
 
-        public Vector2 CurrentMoveInput => playerInput.Move.ReadValue<Vector2>();
-        private float CurrentMovementSpeed { get; set; }
-        private Vector3 movementDirection;
+
+
 
         private void Update() {
             //Find the displacement
@@ -62,25 +63,25 @@ namespace FirstPersonPlayer {
             UpdateMovementSpeed();
             UpdateMovementDirection();
 
-            Vector3 displacement = Time.deltaTime* CurrentMovementSpeed * movementDirection;
-            displacement.y = verticalVelocity * Time.deltaTime;
+            Vector3 displacement = Time.deltaTime* CurrentMovementSpeed * _movementDirection;
+            displacement.y = _verticalVelocity * Time.deltaTime;
 
             //move
-            charController.Move(displacement);
-            if (charController.isGrounded && jumpState == JumpState.Midair) jumpState = JumpState.None;
+            _charController.Move(displacement);
+            if (_charController.isGrounded && _jumpState == JumpState.Midair) _jumpState = JumpState.None;
 
 
             //fncs
             void UpdateMovementSpeed() {
-                if (jumpState != JumpState.None) return;
+                if (_jumpState != JumpState.None) return;
 
                 float targetMovementSpeed = 0;
                 if (CurrentMoveInput != Vector2.zero) {
-                    if (RunningIsAllowed && crouching.CrouchState == CrouchState.Decrouched && playerInput.Run.IsPressed()) targetMovementSpeed = walkingSpeed + runningSpeedIncrease;
+                    if (RunningIsAllowed && _crouching.CrouchState == CrouchState.Standing && _playerInput.Run.IsPressed()) targetMovementSpeed = walkingSpeed + runningSpeedIncrease;
                     else targetMovementSpeed = walkingSpeed;
 
-                    if (crouching.CrouchState == CrouchState.Under) targetMovementSpeed -= underSpeedDecrease;
-                    else if (crouching.CrouchState != CrouchState.Decrouched) targetMovementSpeed -= crouchingSpeedDecrease;
+                    if (_crouching.CrouchState == CrouchState.Under) targetMovementSpeed -= underSpeedDecrease;
+                    else if (_crouching.CrouchState != CrouchState.Standing) targetMovementSpeed -= crouchingSpeedDecrease;
                 }
 
                 if (targetMovementSpeed < 0) targetMovementSpeed = 0;
@@ -91,35 +92,33 @@ namespace FirstPersonPlayer {
                 CurrentMovementSpeed = Mathf.MoveTowards(CurrentMovementSpeed, targetMovementSpeed, frameSpeedChange);
             }
             void UpdateMovementDirection() {
-                if (jumpState != JumpState.None) return;
+                if (_jumpState != JumpState.None) return;
 
-                if (CurrentMoveInput == Vector2.zero && CurrentMovementSpeed == 0) movementDirection = Vector3.zero;
-                else if (CurrentMoveInput != Vector2.zero && charController.isGrounded && jumpState == JumpState.None) {
-                    movementDirection = transform.TransformDirection(new(CurrentMoveInput.x, 0, CurrentMoveInput.y));
+                if (CurrentMoveInput == Vector2.zero && CurrentMovementSpeed == 0) _movementDirection = Vector3.zero;
+                else if (CurrentMoveInput != Vector2.zero && _charController.isGrounded && _jumpState == JumpState.None) {
+                    _movementDirection = transform.TransformDirection(new(CurrentMoveInput.x, 0, CurrentMoveInput.y));
                 }
             }
             void UpdateVerticalVelocity() {
-                if (charController.isGrounded && jumpState == JumpState.None) verticalVelocity = -1;
-                else if (!charController.isGrounded || jumpState == JumpState.Midair) verticalVelocity += Physics.gravity.y * Time.deltaTime;
+                if (_charController.isGrounded && _jumpState == JumpState.None) _verticalVelocity = -1;
+                else if (!_charController.isGrounded || _jumpState == JumpState.Midair) _verticalVelocity += Physics.gravity.y * Time.deltaTime;
             }
         }
 
         public void HandleJump(InputAction.CallbackContext context) {
             if (!JumpingIsAllowed) return;
-            if (crouching.CrouchState == CrouchState.Decrouched) {
-                if (charController.velocity.magnitude <= limitBendVelMgn) {
-                    crouching.Bend(jumpBendHeightMultiplier, jumpBendTime, Jump, null);
-                    jumpState = JumpState.BendingKnees;
+            if (_jumpState == JumpState.None && _crouching.CrouchState == CrouchState.Standing && _charController.isGrounded) {
+                if (_charController.velocity.magnitude <= limitBendVelMgn) {
+                    _crouching.Bend(jumpBendHeightMultiplier, jumpBendTime, Jump, null);
+                    _jumpState = JumpState.BendingKnees;
                 } else Jump();
             }
 
 
             void Jump() {
-                verticalVelocity = jumpPower;
-                jumpState = JumpState.Midair;
+                _verticalVelocity = jumpPower;
+                _jumpState = JumpState.Midair;
             }
         }
-
-        public void ResetWalkingSpeed() => walkingSpeed = initialWalkingSpeed;
     }
 }

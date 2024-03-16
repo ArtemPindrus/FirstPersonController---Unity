@@ -8,7 +8,7 @@ public class BoxCast : MonoBehaviour
 
     [SerializeField] private bool debug;
 
-    private RaycastHit hit;
+    private RaycastHit _hit;
 
     public BoxCast Initialize(Vector3 extends, Vector3 direction, float distance, bool debug = false) {
         this.extends = extends;
@@ -20,12 +20,12 @@ public class BoxCast : MonoBehaviour
         return this;
     }
 
-    public RaycastHit Hit => hit;
+    public RaycastHit Hit => _hit;
 
     public bool HitLastFrame => Hit.collider != null;
 
     private void Update() {
-        Physics.BoxCast(transform.position, extends, direction, out hit, Quaternion.identity, distance);
+        Physics.BoxCast(transform.position, extends, direction, out _hit, Quaternion.identity, distance);
 
         if (debug) Debug.Log($"Ray hit of {gameObject}: {HitLastFrame}");
     }

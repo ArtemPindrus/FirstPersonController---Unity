@@ -1,5 +1,6 @@
 using UnityEngine;
 using Extensions;
+using Input;
 
 namespace FirstPersonPlayer {
     public class MouseLook : MonoBehaviour {
@@ -19,8 +20,8 @@ namespace FirstPersonPlayer {
 
 
         [SerializeField] private Transform neck;
-        private Transform player;
-        private InputSystem.PlayerActions playerInput;
+        private Transform _player;
+        private InputAsset.PlayerActions _playerActions;
 
 
         private float initialUpperVerticalLimit;
@@ -33,9 +34,9 @@ namespace FirstPersonPlayer {
         private void Awake() {
             if (lockCursor) Cursor.lockState = CursorLockMode.Locked;
 
-            player = transform;
-            playerInput = InputSystem.Instance.Player;
-            playerInput.LookAround.started += LookAround_started;
+            _player = transform;
+            _playerActions = InputAsset.Instance.Player;
+            _playerActions.LookAround.started += LookAround_started;
 
             initialLowerVerticalLimit = lowerVerticalLimit;
             initialUpperVerticalLimit = upperVerticalLimit;
@@ -54,9 +55,9 @@ namespace FirstPersonPlayer {
         private void RotateHorizontally(float delta) {
             if (!horizontalRotationAllowed) return;
 
-            Vector3 targetEuler = player.localEulerAngles.Add(y: delta);
+            Vector3 targetEuler = _player.localEulerAngles.Add(y: delta);
 
-            player.localEulerAngles = targetEuler;
+            _player.localEulerAngles = targetEuler;
         }
 
         private void RotateVertically(float delta) {
