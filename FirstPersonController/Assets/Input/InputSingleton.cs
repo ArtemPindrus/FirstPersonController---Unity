@@ -1,11 +1,11 @@
 ﻿namespace Input {
-    public partial class InputAsset {
-        private static @InputAsset _instance;
+    public partial class MyInput {
+        private static MyInput _instance;
 
-        public static @InputAsset Instance {
+        public static MyInput Instance {
             get {
                 if (_instance == null) {
-                    _instance = new @InputAsset();
+                    _instance = new MyInput();
                     _instance.Enable();
                 }
 

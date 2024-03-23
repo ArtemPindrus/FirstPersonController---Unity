@@ -2,7 +2,7 @@
     "name": "InputSystem",
     "maps": [
         {
-            "name": "Player",
+            "name": "PlayerMovement",
             "id": "9f05a84e-6435-4ffe-a051-02604520712f",
             "actions": [
                 {
@@ -190,6 +190,74 @@
                     "processors": "",
                     "groups": "",
                     "action": "LookAround",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "DragAndDropSystem",
+            "id": "08647760-c414-4910-8d08-a3de345f0f09",
+            "actions": [
+                {
+                    "name": "Drag",
+                    "type": "Button",
+                    "id": "3eeb8d75-2e16-4f3b-ad7a-c6c0251dcb72",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateDraggable",
+                    "type": "Button",
+                    "id": "499b254d-cf83-485c-9377-2f5d581cdedd",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Throw",
+                    "type": "Button",
+                    "id": "12bcf2d5-a763-4eb9-b5d9-2c929fb489a0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "9620e1ee-f485-4627-97f2-a2b8a6b34279",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Drag",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e2a813ac-d725-4e47-9aca-6be27fe3bc4f",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateDraggable",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a806134d-2644-4b44-93a9-574814b7c7ce",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throw",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

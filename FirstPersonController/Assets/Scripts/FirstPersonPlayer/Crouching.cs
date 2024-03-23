@@ -8,9 +8,9 @@ using DG.Tweening.Plugins.Options;
 using Input;
 using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.FirstPersonPlayer;
 using Casting;
 using Work;
+using Additional;
 
 namespace FirstPersonController {
     public enum CrouchState { Standing, Uncrouching, Crouched, Crouching, Under }
@@ -58,7 +58,7 @@ namespace FirstPersonController {
         public CrouchState CrouchState { get; set; } = CrouchState.Standing;
 
         private BasicMovement movement;
-        private InputAsset.PlayerActions _playerInput;
+        private MyInput.PlayerMovementActions _playerInput;
         private BoxCast _boxCastUp;
         private TweenerCore<float, float, FloatOptions> heightTween;
         private FloatClass crouchingSpeedReducer;
@@ -82,7 +82,7 @@ namespace FirstPersonController {
             crouchingSpeedReducer = movement.AddSpeedReducer(0);
 
             //input
-            _playerInput = InputAsset.Instance.Player;
+            _playerInput = MyInput.Instance.PlayerMovement;
             _playerInput.Crouch.performed += HandleCrouch_Performed;
 
             //initialize boxcast
@@ -256,12 +256,12 @@ namespace FirstPersonController {
             }
         }
 
-        public void OnTriggerExit(Collider other) {
-            if (other.TryGetComponent(out CrouchableUnder crouchable) && crouchable.Muted) {
-                crouchable.Unmute();
-                activeCrouchable.Remove(crouchable);
-            }
-        }
+        //public void OnTriggerExit(Collider other) {
+        //    if (other.TryGetComponent(out CrouchableUnder crouchable) && crouchable.Muted) {
+        //        crouchable.Unmute();
+        //        activeCrouchable.Remove(crouchable);
+        //    }
+        //}
 
         private WorkManager.WorkInUpdate previousExtraCrouchWork;
         private void ExtraCrouch(CrouchableUnder component) {
@@ -279,6 +279,7 @@ namespace FirstPersonController {
                 ReassignHeightTween(CrouchedHeight, extraCrouchTime, true).OnComplete(ReactToCompletedDecrouchFromUnder);
 
                 component.Unmute();
+                activeCrouchable.Remove(component);
             }
             void ReactToCompletedDecrouchFromUnder() {
                 SetToCrouched();

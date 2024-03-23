@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Input;
-using Assets.Scripts.FirstPersonPlayer;
 using System.Collections.Generic;
+using Additional;
 
 namespace FirstPersonController {
     [RequireComponent(typeof(CharacterController))]
@@ -22,7 +22,7 @@ namespace FirstPersonController {
 
 
         private CharacterController charController;
-        private InputAsset.PlayerActions _playerInput;
+        private MyInput.PlayerMovementActions _playerInput;
 
         public Vector2 CurrentMoveInput => _playerInput.Move.ReadValue<Vector2>();
         private float CurrentMovementSpeed { get; set; }
@@ -36,7 +36,7 @@ namespace FirstPersonController {
         private void Awake() {
             charController = GetComponent<CharacterController>();
 
-            _playerInput = InputAsset.Instance.Player;
+            _playerInput = MyInput.Instance.PlayerMovement;
 
             speedReducers = new();
 

@@ -14,7 +14,7 @@ namespace FirstPersonController {
         [SerializeField] private Transform neck;
         [SerializeField] private Transform neckZRotator;
 
-        private InputAsset.PlayerActions _playerInput;
+        private MyInput.PlayerMovementActions _playerInput;
 
         private TweenerCore<Vector3, Vector3, VectorOptions> _positionTween;
         private TweenerCore<Quaternion, Vector3, QuaternionOptions> _rotationTween;
@@ -23,7 +23,7 @@ namespace FirstPersonController {
 
         private void Awake() {
             Vector3 currentNeckLocalPos = neck.localPosition;
-            _playerInput = InputAsset.Instance.Player;
+            _playerInput = MyInput.Instance.PlayerMovement;
 
             _positionTween = neck.DOLocalMove(currentNeckLocalPos.With(x: 0), requiredTime)
                 .SetEase(Ease.InOutSine)

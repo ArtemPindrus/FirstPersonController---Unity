@@ -17,16 +17,16 @@ using UnityEngine.InputSystem.Utilities;
 
 namespace Input
 {
-    public partial class @InputAsset: IInputActionCollection2, IDisposable
+    public partial class @MyInput: IInputActionCollection2, IDisposable
     {
         public InputActionAsset asset { get; }
-        public @InputAsset()
+        public @MyInput()
         {
             asset = InputActionAsset.FromJson(@"{
     ""name"": ""InputSystem"",
     ""maps"": [
         {
-            ""name"": ""Player"",
+            ""name"": ""PlayerMovement"",
             ""id"": ""9f05a84e-6435-4ffe-a051-02604520712f"",
             ""actions"": [
                 {
@@ -218,18 +218,91 @@ namespace Input
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""DragAndDropSystem"",
+            ""id"": ""08647760-c414-4910-8d08-a3de345f0f09"",
+            ""actions"": [
+                {
+                    ""name"": ""Drag"",
+                    ""type"": ""Button"",
+                    ""id"": ""3eeb8d75-2e16-4f3b-ad7a-c6c0251dcb72"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RotateDraggable"",
+                    ""type"": ""Button"",
+                    ""id"": ""499b254d-cf83-485c-9377-2f5d581cdedd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Throw"",
+                    ""type"": ""Button"",
+                    ""id"": ""12bcf2d5-a763-4eb9-b5d9-2c929fb489a0"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""9620e1ee-f485-4627-97f2-a2b8a6b34279"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e2a813ac-d725-4e47-9aca-6be27fe3bc4f"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RotateDraggable"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a806134d-2644-4b44-93a9-574814b7c7ce"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Throw"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
 }");
-            // Player
-            m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
-            m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-            m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
-            m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
-            m_Player_Lean = m_Player.FindAction("Lean", throwIfNotFound: true);
-            m_Player_Crouch = m_Player.FindAction("Crouch", throwIfNotFound: true);
-            m_Player_LookAround = m_Player.FindAction("LookAround", throwIfNotFound: true);
+            // PlayerMovement
+            m_PlayerMovement = asset.FindActionMap("PlayerMovement", throwIfNotFound: true);
+            m_PlayerMovement_Move = m_PlayerMovement.FindAction("Move", throwIfNotFound: true);
+            m_PlayerMovement_Run = m_PlayerMovement.FindAction("Run", throwIfNotFound: true);
+            m_PlayerMovement_Jump = m_PlayerMovement.FindAction("Jump", throwIfNotFound: true);
+            m_PlayerMovement_Lean = m_PlayerMovement.FindAction("Lean", throwIfNotFound: true);
+            m_PlayerMovement_Crouch = m_PlayerMovement.FindAction("Crouch", throwIfNotFound: true);
+            m_PlayerMovement_LookAround = m_PlayerMovement.FindAction("LookAround", throwIfNotFound: true);
+            // DragAndDropSystem
+            m_DragAndDropSystem = asset.FindActionMap("DragAndDropSystem", throwIfNotFound: true);
+            m_DragAndDropSystem_Drag = m_DragAndDropSystem.FindAction("Drag", throwIfNotFound: true);
+            m_DragAndDropSystem_RotateDraggable = m_DragAndDropSystem.FindAction("RotateDraggable", throwIfNotFound: true);
+            m_DragAndDropSystem_Throw = m_DragAndDropSystem.FindAction("Throw", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -288,34 +361,34 @@ namespace Input
             return asset.FindBinding(bindingMask, out action);
         }
 
-        // Player
-        private readonly InputActionMap m_Player;
-        private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
-        private readonly InputAction m_Player_Move;
-        private readonly InputAction m_Player_Run;
-        private readonly InputAction m_Player_Jump;
-        private readonly InputAction m_Player_Lean;
-        private readonly InputAction m_Player_Crouch;
-        private readonly InputAction m_Player_LookAround;
-        public struct PlayerActions
+        // PlayerMovement
+        private readonly InputActionMap m_PlayerMovement;
+        private List<IPlayerMovementActions> m_PlayerMovementActionsCallbackInterfaces = new List<IPlayerMovementActions>();
+        private readonly InputAction m_PlayerMovement_Move;
+        private readonly InputAction m_PlayerMovement_Run;
+        private readonly InputAction m_PlayerMovement_Jump;
+        private readonly InputAction m_PlayerMovement_Lean;
+        private readonly InputAction m_PlayerMovement_Crouch;
+        private readonly InputAction m_PlayerMovement_LookAround;
+        public struct PlayerMovementActions
         {
-            private @InputAsset m_Wrapper;
-            public PlayerActions(@InputAsset wrapper) { m_Wrapper = wrapper; }
-            public InputAction @Move => m_Wrapper.m_Player_Move;
-            public InputAction @Run => m_Wrapper.m_Player_Run;
-            public InputAction @Jump => m_Wrapper.m_Player_Jump;
-            public InputAction @Lean => m_Wrapper.m_Player_Lean;
-            public InputAction @Crouch => m_Wrapper.m_Player_Crouch;
-            public InputAction @LookAround => m_Wrapper.m_Player_LookAround;
-            public InputActionMap Get() { return m_Wrapper.m_Player; }
+            private @MyInput m_Wrapper;
+            public PlayerMovementActions(@MyInput wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Move => m_Wrapper.m_PlayerMovement_Move;
+            public InputAction @Run => m_Wrapper.m_PlayerMovement_Run;
+            public InputAction @Jump => m_Wrapper.m_PlayerMovement_Jump;
+            public InputAction @Lean => m_Wrapper.m_PlayerMovement_Lean;
+            public InputAction @Crouch => m_Wrapper.m_PlayerMovement_Crouch;
+            public InputAction @LookAround => m_Wrapper.m_PlayerMovement_LookAround;
+            public InputActionMap Get() { return m_Wrapper.m_PlayerMovement; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
             public bool enabled => Get().enabled;
-            public static implicit operator InputActionMap(PlayerActions set) { return set.Get(); }
-            public void AddCallbacks(IPlayerActions instance)
+            public static implicit operator InputActionMap(PlayerMovementActions set) { return set.Get(); }
+            public void AddCallbacks(IPlayerMovementActions instance)
             {
-                if (instance == null || m_Wrapper.m_PlayerActionsCallbackInterfaces.Contains(instance)) return;
-                m_Wrapper.m_PlayerActionsCallbackInterfaces.Add(instance);
+                if (instance == null || m_Wrapper.m_PlayerMovementActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_PlayerMovementActionsCallbackInterfaces.Add(instance);
                 @Move.started += instance.OnMove;
                 @Move.performed += instance.OnMove;
                 @Move.canceled += instance.OnMove;
@@ -336,7 +409,7 @@ namespace Input
                 @LookAround.canceled += instance.OnLookAround;
             }
 
-            private void UnregisterCallbacks(IPlayerActions instance)
+            private void UnregisterCallbacks(IPlayerMovementActions instance)
             {
                 @Move.started -= instance.OnMove;
                 @Move.performed -= instance.OnMove;
@@ -358,22 +431,84 @@ namespace Input
                 @LookAround.canceled -= instance.OnLookAround;
             }
 
-            public void RemoveCallbacks(IPlayerActions instance)
+            public void RemoveCallbacks(IPlayerMovementActions instance)
             {
-                if (m_Wrapper.m_PlayerActionsCallbackInterfaces.Remove(instance))
+                if (m_Wrapper.m_PlayerMovementActionsCallbackInterfaces.Remove(instance))
                     UnregisterCallbacks(instance);
             }
 
-            public void SetCallbacks(IPlayerActions instance)
+            public void SetCallbacks(IPlayerMovementActions instance)
             {
-                foreach (var item in m_Wrapper.m_PlayerActionsCallbackInterfaces)
+                foreach (var item in m_Wrapper.m_PlayerMovementActionsCallbackInterfaces)
                     UnregisterCallbacks(item);
-                m_Wrapper.m_PlayerActionsCallbackInterfaces.Clear();
+                m_Wrapper.m_PlayerMovementActionsCallbackInterfaces.Clear();
                 AddCallbacks(instance);
             }
         }
-        public PlayerActions @Player => new PlayerActions(this);
-        public interface IPlayerActions
+        public PlayerMovementActions @PlayerMovement => new PlayerMovementActions(this);
+
+        // DragAndDropSystem
+        private readonly InputActionMap m_DragAndDropSystem;
+        private List<IDragAndDropSystemActions> m_DragAndDropSystemActionsCallbackInterfaces = new List<IDragAndDropSystemActions>();
+        private readonly InputAction m_DragAndDropSystem_Drag;
+        private readonly InputAction m_DragAndDropSystem_RotateDraggable;
+        private readonly InputAction m_DragAndDropSystem_Throw;
+        public struct DragAndDropSystemActions
+        {
+            private @MyInput m_Wrapper;
+            public DragAndDropSystemActions(@MyInput wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Drag => m_Wrapper.m_DragAndDropSystem_Drag;
+            public InputAction @RotateDraggable => m_Wrapper.m_DragAndDropSystem_RotateDraggable;
+            public InputAction @Throw => m_Wrapper.m_DragAndDropSystem_Throw;
+            public InputActionMap Get() { return m_Wrapper.m_DragAndDropSystem; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(DragAndDropSystemActions set) { return set.Get(); }
+            public void AddCallbacks(IDragAndDropSystemActions instance)
+            {
+                if (instance == null || m_Wrapper.m_DragAndDropSystemActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_DragAndDropSystemActionsCallbackInterfaces.Add(instance);
+                @Drag.started += instance.OnDrag;
+                @Drag.performed += instance.OnDrag;
+                @Drag.canceled += instance.OnDrag;
+                @RotateDraggable.started += instance.OnRotateDraggable;
+                @RotateDraggable.performed += instance.OnRotateDraggable;
+                @RotateDraggable.canceled += instance.OnRotateDraggable;
+                @Throw.started += instance.OnThrow;
+                @Throw.performed += instance.OnThrow;
+                @Throw.canceled += instance.OnThrow;
+            }
+
+            private void UnregisterCallbacks(IDragAndDropSystemActions instance)
+            {
+                @Drag.started -= instance.OnDrag;
+                @Drag.performed -= instance.OnDrag;
+                @Drag.canceled -= instance.OnDrag;
+                @RotateDraggable.started -= instance.OnRotateDraggable;
+                @RotateDraggable.performed -= instance.OnRotateDraggable;
+                @RotateDraggable.canceled -= instance.OnRotateDraggable;
+                @Throw.started -= instance.OnThrow;
+                @Throw.performed -= instance.OnThrow;
+                @Throw.canceled -= instance.OnThrow;
+            }
+
+            public void RemoveCallbacks(IDragAndDropSystemActions instance)
+            {
+                if (m_Wrapper.m_DragAndDropSystemActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            public void SetCallbacks(IDragAndDropSystemActions instance)
+            {
+                foreach (var item in m_Wrapper.m_DragAndDropSystemActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_DragAndDropSystemActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        public DragAndDropSystemActions @DragAndDropSystem => new DragAndDropSystemActions(this);
+        public interface IPlayerMovementActions
         {
             void OnMove(InputAction.CallbackContext context);
             void OnRun(InputAction.CallbackContext context);
@@ -381,6 +516,12 @@ namespace Input
             void OnLean(InputAction.CallbackContext context);
             void OnCrouch(InputAction.CallbackContext context);
             void OnLookAround(InputAction.CallbackContext context);
+        }
+        public interface IDragAndDropSystemActions
+        {
+            void OnDrag(InputAction.CallbackContext context);
+            void OnRotateDraggable(InputAction.CallbackContext context);
+            void OnThrow(InputAction.CallbackContext context);
         }
     }
 }

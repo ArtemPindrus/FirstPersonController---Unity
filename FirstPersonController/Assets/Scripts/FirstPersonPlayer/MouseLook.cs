@@ -1,10 +1,12 @@
 using UnityEngine;
 using Extensions;
 using Input;
+using System.Collections.Generic;
+using Additional;
 
 namespace FirstPersonController {
     public class MouseLook : MonoBehaviour {
-        [SerializeField, Range(0, 100)] private float sensitivity = 1;
+        [field: SerializeField, Range(0, 100)] public float Sensitivity { get; private set; } = 1;
 
         [SerializeField] private bool lockCursor;
         
@@ -21,31 +23,38 @@ namespace FirstPersonController {
 
         [SerializeField] private Transform neck;
         private Transform _player;
-        private InputAsset.PlayerActions _playerActions;
+        private MyInput.PlayerMovementActions _playerActions;
 
 
         private float initialUpperVerticalLimit;
         private float initialLowerVerticalLimit;
         private float initialSensitivity;
 
-
+        private List<FloatClass> sensitivityReducers; 
         public float XAngle { get; private set; }
 
         private void Awake() {
             if (lockCursor) Cursor.lockState = CursorLockMode.Locked;
 
             _player = transform;
-            _playerActions = InputAsset.Instance.Player;
+            _playerActions = MyInput.Instance.PlayerMovement;
             _playerActions.LookAround.started += LookAround_started;
 
             initialLowerVerticalLimit = lowerVerticalLimit;
             initialUpperVerticalLimit = upperVerticalLimit;
-            initialSensitivity = sensitivity;
+            initialSensitivity = Sensitivity;
+
+            sensitivityReducers = new();
         }
 
         private void LookAround_started(UnityEngine.InputSystem.InputAction.CallbackContext context) {
+            float targetSensitivity = Sensitivity;
+
+            foreach (var reducer in sensitivityReducers) targetSensitivity -= reducer.Value;
+            targetSensitivity = Mathf.Clamp01(targetSensitivity);
+
             Vector2 mouseDelta = context.ReadValue<Vector2>();
-            mouseDelta *= sensitivity / 10;
+            mouseDelta *= targetSensitivity / 10;
 
 
             RotateHorizontally(mouseDelta.x);
@@ -82,7 +91,7 @@ namespace FirstPersonController {
         public void DisableVerticalRot() => verticalRotationAllowed = false;
         public void EnableVerticalRot() => verticalRotationAllowed = true;
 
-        public void ResetSensitivityToInitial() => sensitivity = initialSensitivity;
+        public void ResetSensitivityToInitial() => Sensitivity = initialSensitivity;
 
         public void SetVerticalLimits(float upperLimit, float lowerLimit) {
             upperVerticalLimit = upperLimit;
@@ -92,6 +101,13 @@ namespace FirstPersonController {
         public void ResetVerticalLimitsToInitial() {
             upperVerticalLimit = initialUpperVerticalLimit;
             lowerVerticalLimit = initialLowerVerticalLimit;
+        }
+
+        public FloatClass AddSensitivityReducer(float initialValue) {
+            FloatClass reducer = new(initialValue);
+            sensitivityReducers.Add(reducer);
+
+            return reducer;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.FirstPersonPlayer {
+namespace Additional {
     public class FloatClass {
         public float Value { get; private set; }
 
