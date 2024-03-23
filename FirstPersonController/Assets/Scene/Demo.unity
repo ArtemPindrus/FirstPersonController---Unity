@@ -141,8 +141,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a07fed6595460f348afd967012e1f5ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetHeight: 0.7
-  thisCollider: {fileID: 218827602}
+  <TargetHeight>k__BackingField: 0.65
+  <TriggerCollider>k__BackingField: {fileID: 218827602}
   debug: 0
   position: {x: 0, y: 0.21, z: 0}
 --- !u!65 &218827602
@@ -1082,8 +1082,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a07fed6595460f348afd967012e1f5ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetHeight: 0.73
-  thisCollider: {fileID: 916074631}
+  <TargetHeight>k__BackingField: 0.7
+  <TriggerCollider>k__BackingField: {fileID: 916074631}
   debug: 0
   position: {x: 0, y: -4.51, z: 0}
 --- !u!65 &916074631
@@ -1606,8 +1606,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a07fed6595460f348afd967012e1f5ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetHeight: 0.83
-  thisCollider: {fileID: 1246884348}
+  <TargetHeight>k__BackingField: 0.8
+  <TriggerCollider>k__BackingField: {fileID: 1246884348}
   debug: 0
   position: {x: 0, y: -5.15, z: 0}
 --- !u!65 &1246884348
@@ -1687,14 +1687,9 @@ MonoBehaviour:
   acceleration: 4
   deceleration: 6
   <RunningIsAllowed>k__BackingField: 1
-  runningSpeedIncrease: 2
+  runningSpeedIncrease: 1
   <JumpingIsAllowed>k__BackingField: 1
   jumpPower: 3
-  limitBendVelMgn: 1.5
-  jumpBendHeightMultiplier: 0.92
-  jumpBendTime: 0.3
-  crouchingSpeedDecrease: 0.3
-  underSpeedDecrease: 0.6
 --- !u!143 &1321950196
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1749,11 +1744,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07df9d4fa61a5cb45bc47354e7cb895a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <CrouchingTime>k__BackingField: 0.5
-  <DecrouchedHeight>k__BackingField: 0
-  <BasicStepOffset>k__BackingField: 0
+  decrouchedHeight: 1.74
   crouchedHeightMult: 0.5
+  crouchingSpeedReduction: 0.3
+  <CrouchingTime>k__BackingField: 0.5
   overhead: 0.1
+  <BasicStepOffset>k__BackingField: 0.1
+  extraCrouchTime: 0.5
+  extraCrouchSpeedReduction: 0.6
 --- !u!114 &1321950200
 MonoBehaviour:
   m_ObjectHideFlags: 0

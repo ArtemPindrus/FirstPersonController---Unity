@@ -5,7 +5,7 @@ using DG.Tweening;
 using Extensions;
 using Input;
 
-namespace FirstPersonPlayer {
+namespace FirstPersonController {
     public class Leaning : MonoBehaviour {
         [SerializeField, Tooltip("(seconds) to lean to one side"), Range(0, 60)] private float requiredTime;
         [SerializeField, Tooltip("(units)"), Range(0, 1)] private float positionDelta;

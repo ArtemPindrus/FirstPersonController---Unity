@@ -2,7 +2,7 @@ using UnityEngine;
 using Extensions;
 using Input;
 
-namespace FirstPersonPlayer {
+namespace FirstPersonController {
     public class MouseLook : MonoBehaviour {
         [SerializeField, Range(0, 100)] private float sensitivity = 1;
 
