@@ -1,16 +1,18 @@
-﻿using Casting;
+﻿using PhysicsCasting;
 using Input;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Linq;
 
 namespace DragAndDropSystem {
     [RequireComponent(typeof(Rigidbody))]
     public class Draggable : MonoBehaviour {
         [field: SerializeField] public bool IsRotatable { get; private set; }
         [field: SerializeField] public bool IsMovableUpwards { get; private set; }
+        private bool sweepTestingForDragger; //recommended on. Prevents penetration of objects and CCT
 
         private Transform playerCamera;
-        public Rigidbody RB { get; private set; }
+        private Rigidbody rb;
         private RigidBodyData startingRBData;
 
         private float draggingSpeed;
@@ -22,37 +24,68 @@ namespace DragAndDropSystem {
 
         public bool IsBeingDragged { get; private set; }
         public bool IsBeingRotated { get; private set; }
+        public float Mass => rb.mass;
 
         private void Awake() {
-            RB = GetComponent<Rigidbody>();
+            rb = GetComponent<Rigidbody>();
             playerCamera = Camera.main.transform;
 
-            startingRBData = new(RB.constraints, RB.interpolation);
+            startingRBData = new(rb.constraints, rb.interpolation, rb.useGravity);
         }
 
         private void Update() {
             if (IsBeingDragged) {
-                if (Vector3.Distance(playerCamera.position, transform.position) > maxDistanceFromCamera) Drop();
+                if (Vector3.Distance(playerCamera.position, transform.position) > maxDistanceFromCamera) {
+                    dragger.AnnulateCurrentlyDraggable();
+                    Drop();
+                    return;
+                }
+                if (dragger.DropOnOppositeFacing) {
+                    Vector3 directionToObject = (transform.position - playerCamera.transform.position).normalized;
+                    if (Vector3.Dot(directionToObject, playerCamera.transform.forward) < 0) {
+                        dragger.AnnulateCurrentlyDraggable();
+                        Drop();
+                        return;
+                    }
+                }
+
+
 
                 Vector3 direction = (playerCamera.position + playerCamera.forward) - transform.position;
                 Debug.DrawLine(transform.position, transform.position + direction);
 
+                if (sweepTestingForDragger && SweepTestForDragger(direction)) return; 
+                
+
                 Vector3 newVelocity = direction * draggingSpeed;
-                if (!IsMovableUpwards) newVelocity.y = RB.velocity.y;
+                if (!IsMovableUpwards) newVelocity.y = rb.velocity.y;
 
-                RB.velocity = newVelocity;
+                rb.velocity = newVelocity;
 
-                if (IsBeingRotated) {
-                    Vector2 mouseDelta = Mouse.current.delta.value;
-                    Vector2 rotationDelta = mouseDelta * rotationSensitivity;
+                if (IsBeingRotated) Rotate();
+            }
 
-                    transform.Rotate(Vector3.up, rotationDelta.x, Space.World);
-                    transform.Rotate(dragger.transform.right, rotationDelta.y, Space.World);
+            void Rotate() {
+                Vector2 mouseDelta = Mouse.current.delta.value;
+                Vector2 rotationDelta = mouseDelta * rotationSensitivity;
+
+                transform.Rotate(Vector3.up, rotationDelta.x, Space.World);
+                transform.Rotate(dragger.transform.right, rotationDelta.y, Space.World);
+            }
+            bool SweepTestForDragger(Vector3 direction) {
+                RaycastHit[] hits = rb.SweepTestAll(direction, 0.2f);
+
+                if (hits.Any(x => x.collider.TryGetComponent(out DragNDropObjects dragger) && dragger == this.dragger)) {
+                    Debug.Log("dragger found");
+                    rb.velocity = Vector3.zero;
+                    return true;
                 }
+
+                return false;
             }
         }
 
-        public void PickUp(float draggingSpeed, float maxDistanceFromCamera, DragNDropObjects dragger) {
+        public void PickUp(float draggingSpeed, float maxDistanceFromCamera, DragNDropObjects dragger, bool sweepTestingForDragger) {
             Debug.Log("Picked");
 
             IsBeingDragged = true;
@@ -60,9 +93,11 @@ namespace DragAndDropSystem {
             this.draggingSpeed = draggingSpeed;
             this.maxDistanceFromCamera = maxDistanceFromCamera;
             this.dragger = dragger;
+            this.sweepTestingForDragger = sweepTestingForDragger;
 
-            RB.freezeRotation = true;
-            RB.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.freezeRotation = true;
+            if (IsMovableUpwards) rb.useGravity = false;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
         public void Drop() {
@@ -74,8 +109,9 @@ namespace DragAndDropSystem {
             maxDistanceFromCamera = 0;
             dragger = null;
 
-            RB.constraints = startingRBData.Constraints;
-            RB.interpolation = startingRBData.Interpolation;
+            rb.constraints = startingRBData.Constraints;
+            rb.useGravity = startingRBData.UseGravity;
+            rb.interpolation = startingRBData.Interpolation;
 
             StopRotation();
         }
@@ -85,7 +121,7 @@ namespace DragAndDropSystem {
 
             this.rotationSensitivity = rotationSensitivity;
 
-            RB.interpolation = RigidbodyInterpolation.None;
+            rb.interpolation = RigidbodyInterpolation.None;
         }
 
         public void StopRotation() {
@@ -93,14 +129,14 @@ namespace DragAndDropSystem {
 
             rotationSensitivity = 0;
 
-            if (IsBeingDragged) RB.interpolation = RigidbodyInterpolation.Interpolate;
-            else RB.interpolation = startingRBData.Interpolation;
+            if (IsBeingDragged) rb.interpolation = RigidbodyInterpolation.Interpolate;
+            else rb.interpolation = startingRBData.Interpolation;
         }
 
         public void Throw(Vector3 throwForce) {
             Drop();
 
-            RB.AddForce(throwForce, ForceMode.Impulse);
+            rb.AddForce(throwForce, ForceMode.Impulse);
         }
     }
 }

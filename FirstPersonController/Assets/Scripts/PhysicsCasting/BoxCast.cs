@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Casting {
+namespace PhysicsCasting {
     public class BoxCast : MonoBehaviour {
         [SerializeField] private Vector3 extends;
         [SerializeField] private Vector3 direction;

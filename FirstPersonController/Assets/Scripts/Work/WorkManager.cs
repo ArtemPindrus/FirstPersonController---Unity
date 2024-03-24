@@ -20,8 +20,12 @@ namespace Work {
             return work;
         }
 
-        public static void ConstructDoWhileInUpdate(Object? container, Func<bool> @while, Action[] doThis, params Action[] finallyActions) {
-            updateDoes.Add(new DoWhileInUpdate(container, doThis, @while, finallyActions));
+        public static void ConstructDoWhileInUpdate(Object? container, Func<bool> whileCondition, Action[] doThis, params Action[] finallyActions) {
+            updateDoes.Add(new DoWhileInUpdate(container, doThis, whileCondition, finallyActions));
+        }
+
+        public static void ConstructDoWhileInUpdate(Object? container, Func<bool> whileCondition, params Action[] doThis) {
+            updateDoes.Add(new DoWhileInUpdate(container, doThis, whileCondition, null));
         }
 #nullable disable
         #endregion
@@ -76,10 +80,10 @@ namespace Work {
         }
 
         private class DoWhileInUpdate : WorkInUpdate {
-            public Action[] finallyActions;
+            public Action[]? finallyActions;
 
-            public DoWhileInUpdate(Object? container, Action[] doThis, Func<bool> whileCondition, Action[] @finally) : base(container, whileCondition, doThis) {
-                finallyActions = @finally;
+            public DoWhileInUpdate(Object? container, Action[] doThis, Func<bool> whileCondition, Action[]? finallyActions) : base(container, whileCondition, doThis) {
+                this.finallyActions = finallyActions;
             }
 
             public override bool Update() {
@@ -94,7 +98,9 @@ namespace Work {
             }
 
             private void ExecuteFinallyActions() {
-                foreach (var finallyAct in finallyActions) finallyAct();
+                if (finallyActions != null) {
+                    foreach (var finallyAct in finallyActions) finallyAct();
+                }
             }
         }
 

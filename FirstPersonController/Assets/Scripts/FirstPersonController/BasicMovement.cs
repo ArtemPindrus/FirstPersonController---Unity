@@ -3,6 +3,8 @@ using UnityEngine.InputSystem;
 using Input;
 using System.Collections.Generic;
 using Additional;
+using System;
+using Work;
 
 namespace FirstPersonController {
     [RequireComponent(typeof(CharacterController))]
@@ -55,7 +57,6 @@ namespace FirstPersonController {
             //move
             charController.Move(displacement);
 
-
             //fncs
             void UpdateMovementSpeed() {
                 float targetMovementSpeed = 0;
@@ -97,10 +98,27 @@ namespace FirstPersonController {
             return floatClass;
         }
 
+        #region Muting/Resuming
+        public void MuteRunningWhile(Func<bool> whileCondition) {
+            WorkManager.ConstructDoWhileInUpdate(this,
+                whileCondition,
+                new Action[] { () => MuteRunning() },
+                () => ResumeRunning()
+            );
+        }
+
         public void MuteRunning() => RunningIsAllowed = false;
         public void ResumeRunning() => RunningIsAllowed = true;
 
         public void MuteJumping() => JumpingIsAllowed = false;
         public void ResumeJumping() => JumpingIsAllowed = true;
+        public void MuteJumpingWhile(Func<bool> whileCondition) {
+            WorkManager.ConstructDoWhileInUpdate(this,
+                whileCondition,
+                new Action[] { () => MuteJumping() },
+                () => ResumeJumping()
+            );
+        }
+        #endregion
     }
 }
